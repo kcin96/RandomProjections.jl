@@ -1,0 +1,13 @@
+name = "RandomProjection"
+uuid = "7eb5dbc2-f83f-4152-b017-201e0f31a9b9"
+authors = ["Nicholas Ting"]
+version = "1.0.0-DEV"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
