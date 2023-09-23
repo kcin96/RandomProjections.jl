@@ -15,7 +15,7 @@ export
     inverse_projection
 
 # source files
-include("randomprojection.jl")
+include("projection.jl")
 include("auxiliary.jl")
 
 end # module
