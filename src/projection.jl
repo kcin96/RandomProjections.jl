@@ -24,14 +24,28 @@ end
 
 Initializes `GaussianRandomProjection` for gaussian random projections.
 
-Elements of gaussian random matrix are drawn from a `N(μ=0.0, σ=1/√`target_dim`)` distribution.
+Elements of gaussian random matrix are drawn from a ``N(μ=0.0, σ=1/\\sqrt{target\\_dim})`` distribution.
 
 # Arguments
 - `target_dim`: The target dimension to be reduced to. 
 - `rng`: Random number generator.
-- `eps`: Sets the target_dim (if unspecified) according to the Johnson-Lindenstrauss 
-lemma.  
+- `eps`: Sets the target_dim (if unspecified) according to the Johnson-Lindenstrauss lemma.  
 
+# Examples
+```jldoctest
+julia> using RandomProjections
+julia> GaussianRandomProjection()
+GaussianRandomProjection{Float64}(nothing, nothing, [0.0;;], Random.TaskLocalRNG(), 0.1)
+
+julia> GaussianRandomProjection(1000)
+GaussianRandomProjection{Float64}(nothing, 1000, [0.0;;], Random.TaskLocalRNG(), 0.1)
+
+julia> using Random
+julia> rng = MersenneTwister(9)
+MersenneTwister(9)
+julia> GaussianRandomProjection(1000,rng=rng, eps=0.5)
+GaussianRandomProjection{Float64}(nothing, 1000, [0.0;;], MersenneTwister(9), 0.5)
+```
 """
 function GaussianRandomProjection(target_dim::Union{Integer,Nothing} = nothing; 
                                     rng::AbstractRNG = Random.default_rng(), 
@@ -52,25 +66,40 @@ end
 Initializes `SparseRandomProjection` for sparse random projections.
 
 Elements of sparse random matrix are set to 
-```math   
-- -√(s/target_dim) with probability 1/(2s)
-- 0.0 with probability 1/s
-- +√(s/√target_dim) with probability 1/(2s)
+```math 
+\\begin{cases}
+ -\\sqrt{\\frac{s}{target\\_dim}} \\qquad with \\ probability \\ \\frac{1}{2s} \\\\
+ 0.0 \\ \\qquad\\qquad\\qquad with \\ probability \\ \\frac{1}{s} \\\\
+ +\\sqrt{\\frac{s}{target\\_dim}} \\qquad with \\ probability \\ \\frac{1}{2s}
+ \\end{cases}
 ```
-as proposed by Ping Li et al [1].
+as proposed by Ping Li et al. [1].
 
 # Arguments
 - `target_dim`: The target dimension to be reduced to. 
-- `s`: s value defined by Achlioptas [2]. If unspecified, s = sqrt(D) where D is the source 
-dimension as recommended in [1].
+- `s`: s value defined by Achlioptas [2]. If unspecified, ``s = \\sqrt{D}`` where D is the source dimension as recommended in [1].
 - `rng`: Random number generator.
-- `eps`: Sets the target_dim (if unspecified) according to the Johnson-Lindenstrauss 
-lemma.  
+- `eps`: Sets the target_dim (if unspecified) according to the Johnson-Lindenstrauss lemma.  
 
-References:
-[1] Ping Li, T. Hastie and K. W. Church, 2006, “Very Sparse Random Projections”.
+# References:
+[1] Ping Li, T. Hastie and K. W. Church, 2006, “Very Sparse Random Projections”. \\
 [2] Dimitris Achlioptas. Database-friendly random projections: Johnson-Lindenstrauss 
 with binary coins. Journal of Computer and System Sciences, 66(4):671–687, 2003.
+
+# Examples
+```jldoctest
+julia> SparseRandomProjection()
+SparseRandomProjection{Float64}(nothing, nothing, [0.0;;], nothing, TaskLocalRNG(), 0.1)
+
+julia> SparseRandomProjection(1000)
+SparseRandomProjection{Float64}(nothing, 1000, [0.0;;], nothing, TaskLocalRNG(), 0.1)
+
+julia> using Random
+julia> rng = MersenneTwister(9)
+MersenneTwister(9)
+julia> SparseRandomProjection(1000,rng=rng, eps=0.5)
+SparseRandomProjection{Float64}(nothing, 1000, [0.0;;], nothing, MersenneTwister(9), 0.5)
+```
 """
 function SparseRandomProjection(target_dim::Union{Integer,Nothing} = nothing; 
                                 s::Union{Real,Nothing} = nothing, 
@@ -105,15 +134,26 @@ projection_size(M::RandomProjection) = Base.size(M.projection_mat)
 
 Returns the minimum dimension to be projected onto that satifies the Johnson-Lindenstrauss lemma.
 
-The dimension is computed according to  
-```math
-    `target_dim` \\geq \frac{4ln(n_samples)}{\epsilon^2/2-\epsilon^3/3}
-```
+The dimension is computed from  
+`` target\\_dim \\geq \\frac{4ln(n\\_samples)}{\\frac{\\epsilon ^2}{2}-\\frac{\\epsilon ^3}{3}}``
 as defined in [1].
 
-References:
+# References:
 [1] Sanjoy Dasgupta, Anupam Gupta. An Elementary Proof of a Theorem of Johnson and Lindenstrauss.
 Random Structures and Algorithms, 22(1):60-65, 2003.
+
+# Examples
+```jldoctest
+julia> johnson_lindenstrauss_min_dim(8000, 0.5)
+431
+
+julia> johnson_lindenstrauss_min_dim(1000, [0.1,0.2,0.7,0.9])
+4-element Vector{Int64}:
+ 5920
+ 1594
+  211
+  170
+```
 """
 function johnson_lindenstrauss_min_dim(n_samples, eps)
     if n_samples <= 0
@@ -160,10 +200,22 @@ function sparse_random_matrix(source_dim, target_dim, s::Real, rng::AbstractRNG)
 end
 
 """
-    fit!((M::GaussianRandomProjection, X::AbstractMatrix)
+    fit!(M::GaussianRandomProjection, X::AbstractMatrix)
 
-Given `X` of dimensions (n_samples, source_dim), fits `GaussianRandomProjection` with a gaussian 
-random projection matrix of (source_dim, target_dim) dimensions.
+Given `X` of dimensions (n\\_samples, source\\_dim), fits `GaussianRandomProjection` with a gaussian 
+random projection matrix of (source\\_dim, target\\_dim) dimensions.
+
+# Examples
+```jldoctest
+julia> X = ones(100,7000);
+julia> rng = MersenneTwister(9)
+MersenneTwister(9)
+julia> gaussian_model = GaussianRandomProjection(500;rng=rng,eps=0.2)
+GaussianRandomProjection{Float64}(nothing, 500, [0.0;;], MersenneTwister(9), 0.2)
+julia> fit!(gaussian_model,X);
+julia> projection_size(gaussian_model)
+(7000, 500)
+```
 """
 function fit!(M::GaussianRandomProjection, X::AbstractMatrix)
     (n_s, source_dim) = Base.size(X)
@@ -182,8 +234,20 @@ end
 """
     fit!(M::SparseRandomProjection, X::AbstractMatrix)
 
-Given `X` of dimensions (n_samples, source_dim), fits `SparseRandomProjection` with a 
-sparse random projection matrix of (source_dim, target_dim) dimensions.
+Given `X` of dimensions (n\\_samples, source\\_dim), fits `SparseRandomProjection` with a 
+sparse random projection matrix of (source\\_dim, target\\_dim) dimensions.
+
+# Examples
+```jldoctest
+julia> X = ones(100,7000);
+julia> rng = MersenneTwister(9)
+MersenneTwister(9)
+julia> sparse_model = SparseRandomProjection(100;rng=rng)
+SparseRandomProjection{Float64}(nothing, 100, [0.0;;], nothing, MersenneTwister(9), 0.1)
+julia> fit!(sparse_model,X);
+julia> projection_size(sparse_model)
+(7000, 100)
+```
 """
 function fit!(M::SparseRandomProjection, X::AbstractMatrix)
     (n_s, source_dim) = Base.size(X)
@@ -204,6 +268,19 @@ end
     predict(M::RandomProjection, X::AbstractMatrix)
 
 Projects data `X` to target dimension.
+
+# Examples
+```jldoctest
+julia> X = ones(100,7000);
+julia> rng = MersenneTwister(9)
+MersenneTwister(9)
+julia> sparse_model = SparseRandomProjection(100;rng=rng)
+SparseRandomProjection{Float64}(nothing, 100, [0.0;;], nothing, MersenneTwister(9), 0.1)
+julia> fit!(sparse_model,X);
+julia> p = predict(sparse_model,10X);
+julia> size(p)
+(100, 100)
+```
 """
 function predict(M::RandomProjection, X::AbstractMatrix)
     return X * M.projection_mat  
@@ -213,6 +290,20 @@ end
     fit_predict!(M::RandomProjection, X::AbstractMatrix)
 
 Generates random projection matrix and projects data `X` to target dimension.
+
+# Examples
+```jldoctest
+julia> X = ones(3,10);
+julia> rng = MersenneTwister(9)
+MersenneTwister(9)
+julia> sparse_model = SparseRandomProjection(5;rng=rng)
+SparseRandomProjection{Float64}(nothing, 5, [0.0;;], nothing, MersenneTwister(9), 0.1)
+julia> fit_predict!(sparse_model,X)
+3×5 Matrix{Float64}:
+ -1.59054  0.795271  …  -0.795271  1.59054
+ -1.59054  0.795271     -0.795271  1.59054
+ -1.59054  0.795271     -0.795271  1.59054
+```
 """
 function fit_predict!(M::RandomProjection, X::AbstractMatrix)
     fit!(M, X)
