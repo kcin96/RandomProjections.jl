@@ -1,4 +1,4 @@
-# RandomProjections
+# RandomProjections.jl
 
 This is a Julia implementation of random projections. This package supports
 - Gaussian random projections
