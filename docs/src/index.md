@@ -6,7 +6,7 @@ This is a Julia package for random projections. This package supports
 - Johnson-Lindenstrauss mininum dimension
 
 ## Installation
-To install the Julia REPL:
+To install in the Julia REPL:
 ```julia-repl
 julia> using Pkg
 julia> Pkg.add("RandomProjections")
